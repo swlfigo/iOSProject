@@ -44,6 +44,8 @@ static NSString * const MJDowndloadManagerDefaultIdentifier = @"com.github.njhu.
 @property (copy, nonatomic) NSString *url;
 /** 下载的错误信息 */
 @property (strong, nonatomic) NSError *error;
+/** 下载速度 */
+@property (strong, nonatomic) NSNumber *speed;
 /******** Readonly End ********/
 
 /** 存放所有的进度回调 */
@@ -62,12 +64,19 @@ static NSString * const MJDowndloadManagerDefaultIdentifier = @"com.github.njhu.
     if (_file == nil) {
         _file = [[NSString stringWithFormat:@"%@/%@", MJDownloadRootDir, self.filename] prependCaches];
     }
-    
     if (_file && ![[NSFileManager defaultManager] fileExistsAtPath:_file]) {
-        NSString *dir = [_file stringByDeletingLastPathComponent];
-        [[NSFileManager defaultManager] createDirectoryAtPath:dir withIntermediateDirectories:YES attributes:nil error:nil];
+        
+        NSString *dir = [_file stringByDeletingLastPathComponent]; // caches/rootDir/asd.mp4
+        
+        BOOL isDir = NO;
+        
+        if (![[NSFileManager defaultManager] fileExistsAtPath:dir isDirectory:&isDir]) {
+            if (!isDir) {
+                 [[NSFileManager defaultManager] createDirectoryAtPath:dir withIntermediateDirectories:YES attributes:nil error:nil];
+            }
+        }
+
     }
-    
     return _file;
 }
 
@@ -94,7 +103,7 @@ static NSString * const MJDowndloadManagerDefaultIdentifier = @"com.github.njhu.
 
 - (NSInteger)totalBytesWritten
 {
-    return self.file.fileSize;
+    return [[[NSFileManager defaultManager] attributesOfItemAtPath:self.file error:nil][NSFileSize] integerValue];
 }
 
 - (NSInteger)totalBytesExpectedToWrite
@@ -108,13 +117,16 @@ static NSString * const MJDowndloadManagerDefaultIdentifier = @"com.github.njhu.
 - (MJDownloadState)state
 {
     // 如果是下载完毕
-    if (self.totalBytesExpectedToWrite && self.totalBytesWritten == self.totalBytesExpectedToWrite) {
+    if (self.totalBytesExpectedToWrite > 0 && self.totalBytesWritten >= self.totalBytesExpectedToWrite) {
         return MJDownloadStateCompleted;
     }
+//    NSURLSessionTaskStateRunning = 0,                     /* The task is currently being serviced by the session */
+//    NSURLSessionTaskStateSuspended = 1,
+//    NSURLSessionTaskStateCanceling = 2,                   /* The task has been told to cancel.  The session will receive a URLSession:task:didCompleteWithError: message. */
+//    NSURLSessionTaskStateCompleted = 3,                   /* The task has completed and the session will receive no more delegate notifications */
     
     // 如果下载失败
     if (self.task.error) return MJDownloadStateNone;
-    
     return _state;
 }
 
@@ -159,9 +171,12 @@ static NSString * const MJDowndloadManagerDefaultIdentifier = @"com.github.njhu.
 #pragma mark - 状态控制
 - (void)setState:(MJDownloadState)state
 {
+    if (!self.task) {
+        return;
+    }
+    
     MJDownloadState oldState = _state;
     if (state == oldState) return;
-    
     _state = state;
     
     // 发通知
@@ -174,7 +189,6 @@ static NSString * const MJDowndloadManagerDefaultIdentifier = @"com.github.njhu.
 - (void)cancel
 {
     if (self.state == MJDownloadStateCompleted || self.state == MJDownloadStateNone) return;
-    
     [self.task cancel];
     self.state = MJDownloadStateNone;
 }
@@ -184,6 +198,12 @@ static NSString * const MJDowndloadManagerDefaultIdentifier = @"com.github.njhu.
  */
 - (void)resume
 {
+//    MJDownloadStateNone = 0,     // 闲置状态（除后面几种状态以外的其他状态）
+//    MJDownloadStateWillResume = 1,   // 即将下载（等待下载）
+//    MJDownloadStateResumed = 2,      // 下载中
+//    MJDownloadStateSuspened = 3,     // 暂停中
+//    MJDownloadStateCompleted = 4     // 已经完全下载完毕
+    
     if (self.state == MJDownloadStateCompleted || self.state == MJDownloadStateResumed) return;
     
     [self.task resume];
@@ -196,7 +216,6 @@ static NSString * const MJDowndloadManagerDefaultIdentifier = @"com.github.njhu.
 - (void)willResume
 {
     if (self.state == MJDownloadStateCompleted || self.state == MJDownloadStateWillResume) return;
-    
     self.state = MJDownloadStateWillResume;
 }
 
@@ -220,7 +239,10 @@ static NSString * const MJDowndloadManagerDefaultIdentifier = @"com.github.njhu.
 {
     // 获得文件总长度
     if (!self.totalBytesExpectedToWrite) {
+        NSLog(@"%@", response.allHeaderFields);
+        NSLog(@"==== %zd =====", (NSUInteger)response.expectedContentLength);
         self.totalBytesExpectedToWrite = [response.allHeaderFields[@"Content-Length"] integerValue] + self.totalBytesWritten;
+        
         // 存储文件总长度
         _totalFileSizes[self.url] = @(self.totalBytesExpectedToWrite);
         [_totalFileSizes writeToFile:_totalFileSizesFile atomically:YES];
@@ -251,9 +273,6 @@ static NSString * const MJDowndloadManagerDefaultIdentifier = @"com.github.njhu.
 {
     // 关闭流
     [self.stream close];
-    self.bytesWritten = 0;
-    self.stream = nil;
-    self.task = nil;
     
     // 错误(避免nil的error覆盖掉之前设置的self.error)
     self.error = error ? error : self.error;
@@ -263,7 +282,16 @@ static NSString * const MJDowndloadManagerDefaultIdentifier = @"com.github.njhu.
         // 设置状态
         self.state = error ? MJDownloadStateNone : MJDownloadStateCompleted;
     }
+    
+    self.bytesWritten = 0;
+    self.stream = nil;
+    self.task = nil;
 }
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"url = %@, state = %zd", self.url, self.state];
+}
+
 @end
 /****************** MJDownloadInfo End ******************/
 
@@ -272,8 +300,8 @@ static NSString * const MJDowndloadManagerDefaultIdentifier = @"com.github.njhu.
 @interface MJDownloadManager() <NSURLSessionDataDelegate>
 /** session */
 @property (strong, nonatomic) NSURLSession *session;
-/** 存放所有文件的下载信息 */
-@property (strong, nonatomic) NSMutableArray *downloadInfoArray;
+///** 存放所有文件的下载信息 */
+//@property (strong, nonatomic) NSMutableArray<MJDownloadInfo *> *downloadInfoArray;
 /** 是否正在批量处理 */
 @property (assign, nonatomic, getter=isBatching) BOOL batching;
 @end
@@ -350,10 +378,10 @@ static NSLock *_lock;
     return _queue;
 }
 
-- (NSMutableArray *)downloadInfoArray
+- (NSMutableArray<MJDownloadInfo *> *)downloadInfoArray
 {
     if (!_downloadInfoArray) {
-        self.downloadInfoArray = [NSMutableArray array];
+        _downloadInfoArray = [NSMutableArray array];
     }
     return _downloadInfoArray;
 }
@@ -418,15 +446,29 @@ static NSLock *_lock;
 {
     if (self.isBatching) return;
     
-    MJDownloadInfo *willInfo = [self.downloadInfoArray filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"state==%d", MJDownloadStateWillResume]].firstObject;
-    [self resume:willInfo.url];
+        if (self.downloadInfoArray.count > 0) {
+            MJDownloadInfo *willInfo = [self.downloadInfoArray filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"state==%d", MJDownloadStateWillResume]].firstObject;
+            [self resume:willInfo.url];
+        }
+    
+//    @synchronized(self) {
+//        [self.downloadInfoArray enumerateObjectsUsingBlock:^(MJDownloadInfo * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+//
+//            if (obj.state == MJDownloadStateWillResume) {
+//                [self resume:obj.url];
+//                *stop = YES;
+//            }
+//        }];
+//    }
 }
 
 - (void)cancelAll
 {
+    self.batching = YES;
     [self.downloadInfoArray enumerateObjectsUsingBlock:^(MJDownloadInfo *info, NSUInteger idx, BOOL *stop) {
         [self cancel:info.url];
     }];
+    self.batching = NO;
 }
 
 + (void)cancelAll
@@ -436,6 +478,7 @@ static NSLock *_lock;
 
 - (void)suspendAll
 {
+    // 暂停
     self.batching = YES;
     [self.downloadInfoArray enumerateObjectsUsingBlock:^(MJDownloadInfo *info, NSUInteger idx, BOOL *stop) {
         [self suspend:info.url];
@@ -450,9 +493,11 @@ static NSLock *_lock;
 
 - (void)resumeAll
 {
+    self.batching = YES;
     [self.downloadInfoArray enumerateObjectsUsingBlock:^(MJDownloadInfo *info, NSUInteger idx, BOOL *stop) {
         [self resume:info.url];
     }];
+    self.batching = NO;
 }
 
 + (void)resumeAll
@@ -464,8 +509,11 @@ static NSLock *_lock;
 {
     if (url == nil) return;
     
+    // 获得下载信息
+    MJDownloadInfo *info = [self downloadInfoForURL:url];
+    
     // 取消
-    [[self downloadInfoForURL:url] cancel];
+    [info cancel];
     
     // 这里不需要取出第一个等待下载的，因为调用cancel会触发-URLSession:task:didCompleteWithError:
 //    [self resumeFirstWillResume];
@@ -475,8 +523,11 @@ static NSLock *_lock;
 {
     if (url == nil) return;
     
+    // 获得下载信息
+    MJDownloadInfo *info = [self downloadInfoForURL:url];
+    
     // 暂停
-    [[self downloadInfoForURL:url] suspend];
+    [info suspend];
     
     // 取出第一个等待下载的
     [self resumeFirstWillResume];
@@ -489,14 +540,35 @@ static NSLock *_lock;
     // 获得下载信息
     MJDownloadInfo *info = [self downloadInfoForURL:url];
     
-    // 正在下载的
-    NSArray *downloadingDownloadInfoArray = [self.downloadInfoArray filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"state==%d", MJDownloadStateResumed]];
-    if (self.maxDownloadingCount && downloadingDownloadInfoArray.count == self.maxDownloadingCount) {
-        // 等待下载
-        [info willResume];
-    } else {
-        // 继续
-        [info resume];
+    // 状态已经在下载啦
+    if (info.state == MJDownloadStateResumed) {
+        return;
+    }
+    
+    // 下载中的
+//    NSArray *downloadingDownloadInfoArray = [self.downloadInfoArray filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"state==%d", MJDownloadStateResumed]];
+    
+    // 加锁, 多个线程同时访问就不准确了
+    @synchronized(self) {
+        if (self.downloadInfoArray.count == 0) {
+            return;
+        }
+        
+        // 需要调用 getter 方法
+        NSArray<MJDownloadInfo *> *downloadingDownloadInfoArrayM = [self.downloadInfoArray filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"state==%d", MJDownloadStateResumed]];
+        if (self.maxDownloadingCount > 0 && downloadingDownloadInfoArrayM.count >= self.maxDownloadingCount) {
+            // 等待下载
+            [info willResume];
+        } else {
+            // MJ Bug fix
+            // 出错以后就没有 task 了...bug fix, 下载失败重新下载
+            if (info.error && !info.task) {
+                [info setupTask:self.session];
+            }
+            // 继续
+            [info resume];
+        }
+        
     }
 }
 
@@ -504,13 +576,15 @@ static NSLock *_lock;
 - (MJDownloadInfo *)downloadInfoForURL:(NSString *)url
 {
     if (url == nil) return nil;
-    
+    // 加锁, 防止多个线程同时下载一个 URL
+    [_lock lock];
     MJDownloadInfo *info = [self.downloadInfoArray filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"url==%@", url]].firstObject;
     if (info == nil) {
         info = [[MJDownloadInfo alloc] init];
         info.url = url; // 设置url
         [self.downloadInfoArray addObject:info];
     }
+    [_lock unlock];
     return info;
 }
 

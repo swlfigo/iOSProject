@@ -61,7 +61,7 @@ typedef void (^MJDownloadStateChangeBlock)(MJDownloadState state, NSString *file
 /** 下载的错误信息 */
 @property (strong, nonatomic, readonly) NSError *error;
 /** 下载速度 */
-@property (strong, nonatomic) NSNumber *speed;
+@property (strong, nonatomic, readonly) NSNumber *speed;
 @end
 /****************** MJDownloadInfo End ******************/
 
@@ -77,6 +77,8 @@ typedef void (^MJDownloadStateChangeBlock)(MJDownloadState state, NSString *file
 @property (strong, nonatomic) NSOperationQueue *queue;
 /** 最大同时下载数 */
 @property (assign, nonatomic) int maxDownloadingCount;
+/** 存放所有文件的下载信息 */
+@property (strong, nonatomic) NSMutableArray<MJDownloadInfo *> *downloadInfoArray;
 
 + (instancetype)defaultManager;
 + (instancetype)manager;

@@ -9,69 +9,60 @@
 #import "LMJNavUIBaseViewController.h"
 #import "LMJNavigationBar.h"
 
-@interface LMJNavUIBaseViewController ()
-
-
-
-@end
-
 @implementation LMJNavUIBaseViewController
 
 - (void)viewDidLoad {
-    
     [super viewDidLoad];
+
+    LMJWeak(self);
+    [self.navigationItem addObserverBlockForKeyPath:LMJKeyPath(self.navigationItem, title) block:^(id  _Nonnull obj, id  _Nonnull oldVal, NSString  *_Nonnull newVal) {
+        if (newVal.length > 0 && ![newVal isEqualToString:oldVal]) {
+            weakself.title = newVal;
+        }
+    }];
 }
 
 
 #pragma mark - 生命周期
-- (void)viewWillAppear:(BOOL)animated
-{
+- (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
-    
 }
 
-- (void)viewWillLayoutSubviews
-{
+- (void)viewWillLayoutSubviews {
     [super viewWillLayoutSubviews];
 }
 
 
-- (void)viewDidLayoutSubviews
-{
+- (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
     
     self.lmj_navgationBar.lmj_width = self.view.lmj_width;
     [self.view bringSubviewToFront:self.lmj_navgationBar];
 }
 
-- (void)viewDidAppear:(BOOL)animated
-{
+- (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
-    
-    [UIApplication sharedApplication].statusBarStyle = [self navUIBaseViewControllerPreferStatusBarStyle:self];
 }
 
-
-
-
-
-#pragma mark - LMJNavUIBaseViewControllerDataSource
-- (BOOL)navUIBaseViewControllerIsNeedNavBar:(LMJNavUIBaseViewController *)navUIBaseViewController
-{
-    return YES;
+- (void)dealloc {
+    [self.navigationItem removeObserverBlocksForKeyPath:LMJKeyPath(self.navigationItem, title)];
 }
 
-
-- (UIStatusBarStyle)navUIBaseViewControllerPreferStatusBarStyle:(LMJNavUIBaseViewController *)navUIBaseViewController
-{
+- (UIStatusBarStyle)preferredStatusBarStyle {
     return UIStatusBarStyleDefault;
 }
 
+- (BOOL)prefersStatusBarHidden {
+    return NO;
+}
 
 #pragma mark - DataSource
+- (BOOL)navUIBaseViewControllerIsNeedNavBar:(LMJNavUIBaseViewController *)navUIBaseViewController {
+    return YES;
+}
+
 /**头部标题*/
-- (NSMutableAttributedString*)lmjNavigationBarTitle:(LMJNavigationBar *)navigationBar
-{
+- (NSMutableAttributedString*)lmjNavigationBarTitle:(LMJNavigationBar *)navigationBar {
     return [self changeTitle:self.title ?: self.navigationItem.title];
 }
 
@@ -82,8 +73,7 @@
 //}
 
 /** 背景色 */
-- (UIColor *)lmjNavigationBackgroundColor:(LMJNavigationBar *)navigationBar
-{
+- (UIColor *)lmjNavigationBackgroundColor:(LMJNavigationBar *)navigationBar {
     return [UIColor whiteColor];
 }
 
@@ -94,8 +84,7 @@
 //}
 
 /** 导航条的高度 */
-- (CGFloat)lmjNavigationHeight:(LMJNavigationBar *)navigationBar
-{
+- (CGFloat)lmjNavigationHeight:(LMJNavigationBar *)navigationBar {
     return [UIApplication sharedApplication].statusBarFrame.size.height + 44.0;
 }
 
@@ -130,18 +119,15 @@
 
 #pragma mark - Delegate
 /** 左边的按钮的点击 */
--(void)leftButtonEvent:(UIButton *)sender navigationBar:(LMJNavigationBar *)navigationBar
-{
+-(void)leftButtonEvent:(UIButton *)sender navigationBar:(LMJNavigationBar *)navigationBar {
     NSLog(@"%s", __func__);
 }
 /** 右边的按钮的点击 */
--(void)rightButtonEvent:(UIButton *)sender navigationBar:(LMJNavigationBar *)navigationBar
-{
+-(void)rightButtonEvent:(UIButton *)sender navigationBar:(LMJNavigationBar *)navigationBar {
     NSLog(@"%s", __func__);
 }
 /** 中间如果是 label 就会有点击 */
--(void)titleClickEvent:(UILabel *)sender navigationBar:(LMJNavigationBar *)navigationBar
-{
+-(void)titleClickEvent:(UILabel *)sender navigationBar:(LMJNavigationBar *)navigationBar {
     NSLog(@"%s", __func__);
 }
 
@@ -160,10 +146,9 @@
 }
 
 
-- (LMJNavigationBar *)lmj_navgationBar
-{
+- (LMJNavigationBar *)lmj_navgationBar {
     // 父类控制器必须是导航控制器
-    if(!_lmj_navgationBar && [self.parentViewController isKindOfClass:[UINavigationController class]] && [self navUIBaseViewControllerIsNeedNavBar:self])
+    if(!_lmj_navgationBar && [self.parentViewController isKindOfClass:[UINavigationController class]])
     {
         LMJNavigationBar *navigationBar = [[LMJNavigationBar alloc] initWithFrame:CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, 0)];
         [self.view addSubview:navigationBar];
@@ -171,8 +156,7 @@
         
         navigationBar.dataSource = self;
         navigationBar.lmjDelegate = self;
-        
-        
+        navigationBar.hidden = ![self navUIBaseViewControllerIsNeedNavBar:self];
     }
     return _lmj_navgationBar;
 }
@@ -180,21 +164,12 @@
 
 
 
-- (void)setTitle:(NSString *)title
-{
+- (void)setTitle:(NSString *)title {
     [super setTitle:title];
-    
     self.lmj_navgationBar.title = [self changeTitle:title];
 }
 
-
-
-
 @end
-
-
-
-
 
 
 

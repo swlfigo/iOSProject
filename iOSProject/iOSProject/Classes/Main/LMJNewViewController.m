@@ -15,6 +15,7 @@
 #import "LMJElementsCollectionViewController.h"
 #import "LMJVerticalLayoutViewController.h"
 #import "LMJHorizontalLayoutViewController.h"
+#import "LMJCuteFlowLayoutViewController.h"
 #import "LMJKeyboardHandleViewController.h"
 #import "LMJDownLoadFileViewController.h"
 #import "LMJMasonryViewController.h"
@@ -24,10 +25,11 @@
 #import "LMJUpLoadProgressViewController.h"
 #import "LMJListTimerCountDownViewController.h"
 #import "LMJH5_OCViewController.h"
+#import "LMJH5JSBridgeViewController.h"
 #import "LMJAlertViewsViewController.h"
 #import "LMJFillTableFormViewController.h"
 //#import "LMJFaceRecognizeViewController.h"
-#import "LMJTableSDWebImageViewController.h"
+#import "LMJWebImagesCacheViewController.h"
 #import "LMJDragTableViewController.h"
 #import "LMJCalendarViewController.h"
 #import "LMJNavBarFadeViewController.h"
@@ -35,6 +37,8 @@
 #import "LMJAutoLayoutViewController.h"
 #import "LMJVFLLayoutViewController.h"
 #import "LMJOfflineDownloadViewController.h"
+#import "LMJRSAViewController.h"
+#import "LMJUniversalLinkViewController.h"
 
 @interface LMJNewViewController ()
 
@@ -98,6 +102,10 @@
 
     item10.destVc = [LMJHorizontalLayoutViewController class];
 
+    LMJWordArrowItem *item101 = [LMJWordArrowItem itemWithTitle:@"三种CollectionViewLayout布局" subTitle: @"Cute"];
+    
+    item101.destVc = [LMJCuteFlowLayoutViewController class];
+    
     LMJWordArrowItem *item11 = [LMJWordArrowItem itemWithTitle:@"键盘处理" subTitle: @""];
 
     item11.destVc = [LMJKeyboardHandleViewController class];
@@ -106,7 +114,7 @@
 
     item12.destVc = [LMJDownLoadFileViewController class];
     
-    LMJWordArrowItem *item121 = [LMJWordArrowItem itemWithTitle:@"文件 断点 离线 缓存 下载" subTitle: @""];
+    LMJWordArrowItem *item121 = [LMJWordArrowItem itemWithTitle:@"文件 断点 缓存 下载" subTitle: @""];
     
     item121.destVc = [LMJOfflineDownloadViewController class];
 
@@ -135,9 +143,13 @@
 
     item19.destVc = [LMJListTimerCountDownViewController class];
 
-    LMJWordArrowItem *item20 = [LMJWordArrowItem itemWithTitle:@"H5和 OC 交互" subTitle: @""];
+    LMJWordArrowItem *item20 = [LMJWordArrowItem itemWithTitle:@"H5_OC交互" subTitle: @"原生addScriptMessageHandler"];
 
     item20.destVc = [LMJH5_OCViewController class];
+    
+    LMJWordArrowItem *item201 = [LMJWordArrowItem itemWithTitle:@"H5_OC_JSBridge交互" subTitle: @"自定义 JSBridge "];
+    
+    item201.destVc = [LMJH5JSBridgeViewController class];
 
     LMJWordArrowItem *item21 = [LMJWordArrowItem itemWithTitle:@"自定义各种弹框" subTitle: @""];
 
@@ -150,9 +162,9 @@
 //    LMJWordArrowItem *item23 = [LMJWordArrowItem itemWithTitle:@"人脸识别" subTitle: nil];
 //    item23.destVc = [LMJFaceRecognizeViewController class];
 
-    LMJWordArrowItem *item24 = [LMJWordArrowItem itemWithTitle:@"列表加载图片" subTitle: @"SDWebImage"];
+    LMJWordArrowItem *item24 = [LMJWordArrowItem itemWithTitle:@"列表加载图片s" subTitle: @"模仿sdwebImage"];
 
-    item24.destVc = [LMJTableSDWebImageViewController class];
+    item24.destVc = [LMJWebImagesCacheViewController class];
 
     LMJWordArrowItem *item25 = [LMJWordArrowItem itemWithTitle:@"列表拖拽" subTitle: @""];
 
@@ -178,9 +190,21 @@
     
     item30.destVc = [LMJVFLLayoutViewController class];
     
+    LMJWordArrowItem *item40 = [LMJWordArrowItem itemWithTitle:@"RSA 加密解密" subTitle: @"网络数据加密解密"];
+    
+    item40.destVc = [LMJRSAViewController class];
+    
+    LMJWordArrowItem *item41 = [LMJWordArrowItem itemWithTitle:@"通用链接跳转" subTitle: @"浏览器,短信,邮件,其它App,都可以跳转本 App"];
+    
+    item41.destVc = [LMJUniversalLinkViewController class];
 
-    LMJItemSection *section0 = [LMJItemSection sectionWithItems:@[item1, item2, item3, item4, item5, item6, item7, item8, item9, item10, item11, item12, item121,item13, item29, item30, item15, item16, item17, item18, item19, item20, item21, item22, item24, item25, item26, item27, item28] andHeaderTitle:@"静态单元格的头部标题" footerTitle:@"静态单元格的尾部标题"];
-
+    LMJItemSection *section0;
+    section0 = [LMJItemSection sectionWithItems:@[item40, item41, item1, item2, item3, item4, item5, item6, item7, item8, item9, item10, item101, item11, item12, item121,item13, item29, item30, item15, item16, item17, item18, item19, item20, item201, item21, item22, item24, item25, item26, item27, item28] andHeaderTitle:@"静态单元格的头部标题" footerTitle:@"静态单元格的尾部标题"];
+//    [section0.items sortUsingComparator:^NSComparisonResult(LMJWordItem  *_Nonnull obj1, LMJWordItem  *_Nonnull obj2) {
+//
+//        return [NSString stringWithFormat:@"%@%@", obj2.title, obj2.subTitle].length > [NSString stringWithFormat:@"%@%@", obj1.title, obj1.subTitle].length;
+//    }];
+    
     [self.sections addObject:section0];
 }
 

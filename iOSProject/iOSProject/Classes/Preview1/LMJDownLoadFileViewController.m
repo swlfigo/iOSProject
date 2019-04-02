@@ -7,17 +7,9 @@
 //
 
 #import "LMJDownLoadFileViewController.h"
+#import "MBProgressHUD+LMJ.h"
 
 @interface LMJDownLoadFileViewController ()
-
-/** <#digest#> */
-@property (weak, nonatomic) UIButton *downBtn;
-
-/** <#digest#> */
-@property (weak, nonatomic) UIButton *memoryFileBtn;
-
-/** <#digest#> */
-@property (nonatomic, strong) NSArray *addressArray;
 
 @end
 
@@ -26,7 +18,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    LMJWeakSelf(self);
+    LMJWeak(self);
     self.addItem([LMJWordItem itemWithTitle:@"点击下载" subTitle:@"不会重复下载" itemOperation:^(NSIndexPath *indexPath) {
         [weakself downloadFile];
     }]);
@@ -52,7 +44,7 @@
     
     NSString *fileDownLoadPath = @"https://s3.cn-north-1.amazonaws.com.cn/zplantest.s3.seed.meme2c.com/area/area.json";
     
-    NSString *lastModified = [NSUserDefaults.standardUserDefaults stringForKey:@"Last-Modified"] ?: @"";
+    NSString *lastModified = [NSUserDefaults.standardUserDefaults stringForKey:@"areajson_Last_Modified"] ?: @"";
     
     
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:fileDownLoadPath]];
@@ -62,7 +54,7 @@
     
     [request setValue:@"no-cache" forHTTPHeaderField:@"Cache-Control"];
     
-    LMJWeakSelf(self);
+    LMJWeak(self);
     NSLog(@"%@", request);
     MBProgressHUD *hud = [MBProgressHUD showProgressToView:weakself.view Text:@"下载中"];
     [[[LMJRequestManager sharedManager] downloadTaskWithRequest:request progress:^(NSProgress * _Nonnull downloadProgress) {
@@ -88,12 +80,10 @@
         NSString *lastModified = [httpResponse allHeaderFields][@"Last-Modified"];
         
         if (lastModified && !error) {
-            [NSUserDefaults.standardUserDefaults setObject:lastModified forKey:@"Last-Modified"];
-            
+            [NSUserDefaults.standardUserDefaults setObject:lastModified forKey:@"areajson_Last_Modified"];
         }
         
         NSLog(@"%@", lastModified);
-        
         
     }] resume];
     

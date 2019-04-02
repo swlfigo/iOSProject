@@ -38,7 +38,6 @@ static NSString *_dbPath = nil;
             
             for (int i = 0; i < resultSet.columnCount; i++) {
                 
-                
                 NSString *colName = [resultSet columnNameForIndex:i];
                 
                 NSString *colValue = [resultSet objectForColumn:colName];
@@ -49,11 +48,9 @@ static NSString *_dbPath = nil;
             [dictArrayM addObject:dictM];
         }
         
-        
         completion(dictArrayM);
         
     }];
-    
     
 }
 
@@ -61,12 +58,12 @@ static NSString *_dbPath = nil;
 #pragma mark - creatTable
 - (void)creatTable
 {
-    
+//    id INTEGER PRIMARY KEY AUTOINCREMENT,
     NSString *creatTableSql = @"CREATE TABLE IF NOT EXISTS t_topics \n\
-    (id INTEGER PRIMARY KEY AUTOINCREMENT, \n\
+    (\n\
+    t INTEGER PRIMARY KEY NOT NULL, \n\
     topic BLOB NOT NULL, \n\
     type TEXT NOT NULL, \n\
-    t INTEGER NOT NULL, \n\
     time TEXT NOT NULL  DEFAULT (datetime('now', 'localtime'))\n\
     )\n";
     
@@ -82,11 +79,12 @@ static NSString *_dbPath = nil;
         
     }];
     
+//    id INTEGER PRIMARY KEY AUTOINCREMENT,
     NSString *creatNewTopicTableSql = @"CREATE TABLE IF NOT EXISTS new_t_topics \n\
-    (id INTEGER PRIMARY KEY AUTOINCREMENT, \n\
+    (\n\
+    t INTEGER PRIMARY KEY NOT NULL, \n\
     topic BLOB NOT NULL, \n\
     type TEXT NOT NULL, \n\
-    t INTEGER NOT NULL, \n\
     time TEXT NOT NULL  DEFAULT (datetime('now', 'localtime'))\n\
     )\n";
     

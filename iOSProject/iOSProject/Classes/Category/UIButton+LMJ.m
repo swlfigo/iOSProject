@@ -7,6 +7,7 @@
 //
 
 #import "UIButton+LMJ.h"
+#import "UIView+GestureCallback.h"
 
 static const void *UIButtonBlockKey = &UIButtonBlockKey;
 
@@ -67,7 +68,7 @@ static const void *UIButtonBlockKey = &UIButtonBlockKey;
         [self setBackgroundImage:[UIImage imageWithColor:normalBGColor] forState:UIControlStateNormal];
         [self setBackgroundImage:[UIImage imageWithColor:selectBGColor] forState:UIControlStateHighlighted];
     
-    LMJWeakSelf(self);
+    LMJWeak(self);
     [self addTapGestureRecognizer:^(UITapGestureRecognizer *recognizer, NSString *gestureId) {
         
         !doneBlock ?: doneBlock(weakself);
@@ -92,8 +93,6 @@ static const void *UIButtonBlockKey = &UIButtonBlockKey;
 
 
 @implementation APRoundedButton
-
-
 
 
 - (void)makeCorner {
@@ -136,22 +135,43 @@ static const void *UIButtonBlockKey = &UIButtonBlockKey;
             break;
     }
     
+    _nj_cornerRaduous = _nj_cornerRaduous ?: 10.0;
     
     UIBezierPath *maskPath = [UIBezierPath bezierPathWithRoundedRect:self.bounds
                                                    byRoundingCorners:corners
-                                                         cornerRadii:CGSizeMake(10, 10)];
+                                                         cornerRadii:CGSizeMake(_nj_cornerRaduous, _nj_cornerRaduous)];
     CAShapeLayer *maskLayer = [CAShapeLayer layer];
     maskLayer.frame         = self.bounds;
     maskLayer.path          = maskPath.CGPath;
     self.layer.mask         = maskLayer;
-    
 }
 
+- (instancetype)initWithFrame:(CGRect)frame
+{
+    if (self = [super initWithFrame:frame]) {
+        [self setupUIOnce];
+    }
+    return self;
+}
+
+- (instancetype)initWithCoder:(NSCoder *)coder
+{
+    self = [super initWithCoder:coder];
+    if (self) {
+        [self setupUIOnce];
+    }
+    return self;
+}
+
+
+- (void)setupUIOnce
+{
+    [self makeCorner];
+}
 
 - (void)layoutSubviews {
     [super layoutSubviews];
     [self makeCorner];
 }
-
 
 @end

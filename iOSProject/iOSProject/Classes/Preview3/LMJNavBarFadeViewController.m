@@ -10,6 +10,9 @@
 #import "LMJExpandHeader.h"
 
 @interface LMJNavBarFadeViewController ()
+{
+    UIStatusBarStyle _statusBarStyle;
+}
 /** <#digest#> */
 @property (nonatomic, strong) LMJExpandHeader *expandHander;
 @end
@@ -18,7 +21,6 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
     
     [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:NSStringFromClass([UITableViewCell class])];
     
@@ -33,7 +35,7 @@
     
    _expandHander = [LMJExpandHeader expandWithScrollView:self.tableView expandView:imageView];
     
-    // 不透明
+    _statusBarStyle = UIStatusBarStyleLightContent;
 }
 
 
@@ -47,7 +49,6 @@
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:NSStringFromClass([UITableViewCell class])];
     
     cell.textLabel.text = [NSString stringWithFormat:@"第%zd行", indexPath.row];
-    
     
     return cell;
 }
@@ -73,7 +74,7 @@
         
         self.lmj_navgationBar.backgroundColor = [UIColor clearColor];
         
-        [UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleLightContent;
+        _statusBarStyle = UIStatusBarStyleLightContent;
         
     }else if (contentOffset.y > kNavBarHeight && contentOffset.y < 0)
     {
@@ -83,7 +84,7 @@
         
         self.lmj_navgationBar.backgroundColor = [[UIColor whiteColor] colorWithAlphaComponent:(1 - contentOffset.y / kNavBarHeight)];
         
-        [UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleLightContent;
+        _statusBarStyle = UIStatusBarStyleLightContent;
         
     }else if (contentOffset.y >= 0)
     {
@@ -92,17 +93,25 @@
         rightBtn.selected = YES;
         self.lmj_navgationBar.backgroundColor = [UIColor whiteColor];
         
-        [UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleDefault;
+        _statusBarStyle = UIStatusBarStyleDefault;
     }
     
+    [self setNeedsStatusBarAppearanceUpdate];
 }
 
 
 #pragma mark - LMJNavUIBaseViewControllerDataSource
 
-- (UIStatusBarStyle)navUIBaseViewControllerPreferStatusBarStyle:(LMJNavUIBaseViewController *)navUIBaseViewController
-{
-    return UIStatusBarStyleLightContent;
+- (BOOL)prefersStatusBarHidden {
+    return NO;
+}
+
+- (UIStatusBarStyle)preferredStatusBarStyle {
+    return _statusBarStyle;
+}
+
+- (UIStatusBarAnimation)preferredStatusBarUpdateAnimation {
+    return UIStatusBarAnimationFade;
 }
 
 /**头部标题*/
@@ -128,8 +137,6 @@
 /** 导航条左边的按钮 */
 - (UIImage *)lmjNavigationBarLeftButtonImage:(UIButton *)leftButton navigationBar:(LMJNavigationBar *)navigationBar
 {
-
-//    tabBar_new_click_icon
     
     [leftButton setImage:[UIImage imageNamed:@"tabBar_new_click_icon"] forState:UIControlStateSelected];
     
@@ -138,8 +145,6 @@
 /** 导航条右边的按钮 */
 - (UIImage *)lmjNavigationBarRightButtonImage:(UIButton *)rightButton navigationBar:(LMJNavigationBar *)navigationBar
 {
-//    mine-setting-icon
-    
     [rightButton setImage:[UIImage imageNamed:@"mine-setting-icon"] forState:UIControlStateSelected];
     
     return [UIImage imageNamed:@"mine-setting-icon-click"];

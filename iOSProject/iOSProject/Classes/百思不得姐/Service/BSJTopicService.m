@@ -11,17 +11,14 @@
 
 @interface BSJTopicService ()
 
-/** <#digest#> */
 @property (nonatomic, copy) NSString *maxtime;
 
-/** <#digest#> */
+/** 防止重复刷新 */
 @property (nonatomic, strong) id parameters;
 
 @end
 
 @implementation BSJTopicService
-
-
 
 - (void)getTopicIsMore:(BOOL)isMore typeA:(NSString *)typeA topicType:(NSInteger)topicType completion:(void(^)(NSError *error, NSInteger totalCount, NSInteger currentCount))completion
 {
@@ -49,15 +46,10 @@
             NSMutableArray<BSJTopicViewModel *> *newTopicViewModels = [NSMutableArray array];
             
             [[BSJTopic mj_objectArrayWithKeyValuesArray:dictArrayM] enumerateObjectsUsingBlock:^(BSJTopic  *_Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-                
                 [newTopicViewModels addObject:[BSJTopicViewModel viewModelWithTopic:obj]];
-                
             }];
-            
             [self.topicViewModels addObjectsFromArray:newTopicViewModels];
-            
             self.maxtime = self.topicViewModels.lastObject.topic.t;
-            
             completion(nil, 999999999, self.topicViewModels.count);
             
         } else {
@@ -72,9 +64,7 @@
                     return ;
                 }
                 
-                
                 if (!isMore) {
-                    
                     [self.topicViewModels removeAllObjects];
                 }
                 
@@ -86,23 +76,15 @@
                 NSMutableArray<BSJTopicViewModel *> *newTopicViewModels = [NSMutableArray array];
                 
                 [[BSJTopic mj_objectArrayWithKeyValuesArray:response.responseObject[@"list"]] enumerateObjectsUsingBlock:^(BSJTopic  *_Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-                    
                     [newTopicViewModels addObject:[BSJTopicViewModel viewModelWithTopic:obj]];
-                    
                 }];
                 
                 [self.topicViewModels addObjectsFromArray:newTopicViewModels];
-                
                 self.maxtime = self.topicViewModels.lastObject.topic.t;
-                
                 completion(nil, [response.responseObject[@"info"][@"count"] integerValue], self.topicViewModels.count);
-                
             }];
         }
-        
     }];
-    
-    
 }
 
 

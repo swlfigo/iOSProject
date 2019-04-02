@@ -82,7 +82,7 @@ static const NSTimeInterval  maxTime_ = -7 * 24 * 3600;
                 
             }
         
-            NSLog(@"向数据库新增%zd条数据", db.changes);
+            NSLog(@"向数据库新增%d条数据", db.changes);
             
         }];
         
@@ -94,7 +94,7 @@ static const NSTimeInterval  maxTime_ = -7 * 24 * 3600;
 }
 
 
-+ (void)queryTopicListFromDiskWithAreaType:(NSString *)areaType topicType:(NSString *)topicType maxTime:(NSString *)maxTime per:(NSInteger)per completion:(void(^)(NSMutableArray<NSMutableDictionary *> *dictArrayM))completion;
++ (void)queryTopicListFromDiskWithAreaType:(NSString *)areaType topicType:(NSString *)topicType maxTime:(NSString *)maxTime per:(NSInteger)per completion:(void(^)(NSMutableArray<NSMutableDictionary *> *dictArrayM))completion
 {
     
     NSString *tableName = nil;
@@ -124,7 +124,7 @@ static const NSTimeInterval  maxTime_ = -7 * 24 * 3600;
     //    parameters[@"maxtime"] = isMore ? self.maxtime : nil;
     //    parameters[@"per"] = @10;
     
-    if (!maxTime && [LMJRequestManager sharedManager].reachabilityManager.networkReachabilityStatus == AFNetworkReachabilityStatusNotReachable) {
+    if (!maxTime && (LMJRequestManager.sharedManager.reachabilityManager.networkReachabilityStatus == AFNetworkReachabilityStatusUnknown || LMJRequestManager.sharedManager.reachabilityManager.networkReachabilityStatus == AFNetworkReachabilityStatusNotReachable)) {
         
         if ([topicType isEqualToString:@"1"]) {
             sql = [NSString stringWithFormat:@"SELECT * FROM %@ ORDER BY t DESC LIMIT %@", tableName, count];
@@ -132,6 +132,7 @@ static const NSTimeInterval  maxTime_ = -7 * 24 * 3600;
         {
            sql = [NSString stringWithFormat:@"SELECT * FROM %@ WHERE type = %@  ORDER BY t DESC LIMIT %@", tableName, topicType, count];
         }
+        
     }else if (maxTime) {
         
         if ([topicType isEqualToString:@"1"]) {
@@ -154,7 +155,7 @@ static const NSTimeInterval  maxTime_ = -7 * 24 * 3600;
             
             @try {
                 
-                NSDictionary *topicDict = [NSJSONSerialization JSONObjectWithData:topicData options:NSJSONReadingMutableLeaves error:nil];
+                NSDictionary *topicDict = [NSJSONSerialization JSONObjectWithData:topicData options:NSJSONReadingMutableContainers error:nil];
                 
                 [dictArrayM_new addObject:[NSMutableDictionary dictionaryWithDictionary:topicDict]];
                 
@@ -188,7 +189,7 @@ static const NSTimeInterval  maxTime_ = -7 * 24 * 3600;
         BOOL isSucceed = [db executeUpdate:sql withArgumentsInArray:@[]];
         
         if (isSucceed) {
-            NSLog(@"%zd 删除数据成功", db.changes);
+            NSLog(@"%d 删除数据成功", db.changes);
             *rollback = NO;
         }else
         {
@@ -204,7 +205,7 @@ static const NSTimeInterval  maxTime_ = -7 * 24 * 3600;
         BOOL isSucceed = [db executeUpdate:newsql withArgumentsInArray:@[]];
         
         if (isSucceed) {
-            NSLog(@"%zd 删除数据成功", db.changes);
+            NSLog(@"%d 删除数据成功", db.changes);
             *rollback = NO;
         }else
         {
